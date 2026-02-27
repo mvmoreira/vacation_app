@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth & Multi-Tenancy ───────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  teamMembers TeamMember[]
+  ownedTeams  Team[]       @relation("TeamOwner")
+
+  @@map("users")
+}
+
+model Team {
+  id         String   @id @default(uuid())
+  name       String
+  ownerId    String   @map("owner_id")
+  inviteCode String   @unique @map("invite_code")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  owner   User         @relation("TeamOwner", fields: [ownerId], references: [id])
+  members TeamMember[]
+  trips   Trip[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id     String         @id @default(uuid())
+  teamId String         @map("team_id")
+  userId String         @map("user_id")
+  role   TeamMemberRole @default(MEMBER)
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+enum TeamMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// ─── Trips ──────────────────────────────────────────
+
+model Trip {
+  id        String     @id @default(uuid())
+  teamId    String     @map("team_id")
+  name      String
+  startDate DateTime   @map("start_date") @db.Date
+  endDate   DateTime   @map("end_date") @db.Date
+  totalDays Int        @map("total_days")
+  currency  String     @default("BRL") @db.VarChar(3)
+  status    TripStatus @default(PLANNING)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  team       Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  cities     TripCity[]
+  persons    Person[]
+  categories Category[]
+
+  @@map("trips")
+}
+
+enum TripStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+}
+
+// ─── Cities ─────────────────────────────────────────
+
+model City {
+  id          String @id @default(uuid())
+  geonameId   Int    @unique @map("geoname_id")
+  name        String
+  countryCode String @map("country_code") @db.VarChar(2)
+  countryName String @map("country_name")
+  latitude    Float
+  longitude   Float
+
+  tripCities TripCity[]
+
+  @@map("cities")
+}
+
+model TripCity {
+  id            String    @id @default(uuid())
+  tripId        String    @map("trip_id")
+  cityId        String    @map("city_id")
+  order         Int       @default(0)
+  arrivalDate   DateTime? @map("arrival_date") @db.Date
+  departureDate DateTime? @map("departure_date") @db.Date
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  city City @relation(fields: [cityId], references: [id])
+
+  @@unique([tripId, cityId])
+  @@map("trip_cities")
+}
+
+// ─── Persons ────────────────────────────────────────
+
+model Person {
+  id     String @id @default(uuid())
+  teamId String @map("team_id")
+  tripId String @map("trip_id")
+  name   String
+
+  trip     Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+
+  @@map("persons")
+}
+
+// ─── Categories & Budget ────────────────────────────
+
+model Category {
+  id            String     @id @default(uuid())
+  teamId        String     @map("team_id")
+  tripId        String     @map("trip_id")
+  name          String
+  budgetType    BudgetType @default(GLOBAL) @map("budget_type")
+  budgetGoal    Decimal    @default(0) @map("budget_goal") @db.Decimal(12, 2)
+  budgetDetails Json?      @map("budget_details")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  trip          Trip               @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  savings       SavingsEntry[]
+  expenses      Expense[]
+  funding       FundingEntry[]
+  transfersOut  CategoryTransfer[] @relation("TransferFrom")
+  transfersIn   CategoryTransfer[] @relation("TransferTo")
+
+  @@map("categories")
+}
+
+enum BudgetType {
+  GLOBAL
+  PER_PERSON
+}
+
+// ─── Savings (Pre-Trip) ─────────────────────────────
+
+model SavingsEntry {
+  id          String   @id @default(uuid())
+  categoryId  String   @map("category_id")
+  amount      Decimal  @db.Decimal(12, 2)
+  date        DateTime @db.Date
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("savings_entries")
+}
+
+// ─── Funding (During Trip) ──────────────────────────
+
+model FundingEntry {
+  id          String        @id @default(uuid())
+  categoryId  String        @map("category_id")
+  amount      Decimal       @db.Decimal(12, 2)
+  date        DateTime      @db.Date
+  description String?
+  method      FundingMethod
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("funding_entries")
+}
+
+enum FundingMethod {
+  CASH
+  CREDIT_CARD
+}
+
+// ─── Expenses (During Trip) ─────────────────────────
+
+model Expense {
+  id          String   @id @default(uuid())
+  teamId      String   @map("team_id")
+  categoryId  String   @map("category_id")
+  personId    String?  @map("person_id")
+  amount      Decimal  @db.Decimal(12, 2)
+  date        DateTime @db.Date
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  person   Person?  @relation(fields: [personId], references: [id], onDelete: SetNull)
+
+  @@map("expenses")
+}
+
+// ─── Category Transfers ─────────────────────────────
+
+model CategoryTransfer {
+  id             String   @id @default(uuid())
+  fromCategoryId String   @map("from_category_id")
+  toCategoryId   String   @map("to_category_id")
+  amount         Decimal  @db.Decimal(12, 2)
+  date           DateTime @db.Date
+  description    String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  fromCategory Category @relation("TransferFrom", fields: [fromCategoryId], references: [id], onDelete: Cascade)
+  toCategory   Category @relation("TransferTo", fields: [toCategoryId], references: [id], onDelete: Cascade)
+
+  @@map("category_transfers")
+}
