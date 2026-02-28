@@ -19,6 +19,12 @@ export class TripsService {
                 endDate,
                 totalDays,
                 currency: dto.currency,
+                persons: {
+                    create: dto.persons?.map(name => ({
+                        teamId,
+                        name
+                    })) || []
+                }
             },
             include: { cities: { include: { city: true } }, persons: true, categories: true },
         });
@@ -110,14 +116,14 @@ export class TripsService {
     }
 
     async update(id: string, teamId: string, dto: UpdateTripDto) {
-        const trip = await this.prisma.trip.findFirst({ where: { id, teamId } });
+        const trip = await this.prisma.trip.findFirst({ where: { id, teamId }, include: { persons: true } });
         if (!trip) throw new NotFoundException('Trip not found');
 
         const startDate = dto.startDate ? new Date(dto.startDate) : trip.startDate;
         const endDate = dto.endDate ? new Date(dto.endDate) : trip.endDate;
         const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
-        return this.prisma.trip.update({
+        const updatedTrip = await this.prisma.trip.update({
             where: { id },
             data: {
                 ...(dto.name && { name: dto.name }),
@@ -129,6 +135,37 @@ export class TripsService {
             },
             include: { cities: { include: { city: true } }, persons: true },
         });
+
+        // 3. Update persons if provided
+        if (dto.persons) {
+            const existingPersons = trip.persons.map(p => p.name);
+            const toAdd = dto.persons.filter(p => !existingPersons.includes(p));
+            const toRemove = trip.persons.filter(p => !dto.persons?.includes(p.name));
+
+            if (toRemove.length > 0) {
+                await this.prisma.person.deleteMany({
+                    where: { id: { in: toRemove.map(p => p.id) } }
+                });
+            }
+
+            if (toAdd.length > 0) {
+                await this.prisma.person.createMany({
+                    data: toAdd.map(name => ({
+                        teamId,
+                        tripId: id,
+                        name
+                    }))
+                });
+            }
+
+            // Refetch to include updated persons
+            return this.prisma.trip.findUnique({
+                where: { id },
+                include: { cities: { include: { city: true } }, persons: true }
+            }) as any;
+        }
+
+        return updatedTrip;
     }
 
     async remove(id: string, teamId: string) {

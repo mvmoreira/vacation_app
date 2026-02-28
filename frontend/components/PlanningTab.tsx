@@ -6,7 +6,9 @@ import styles from '../app/trips/[id]/page.module.css';
 interface Category {
     id: string;
     name: string;
+    budgetType: 'GLOBAL' | 'PER_PERSON';
     budgetGoal: number;
+    budgetDetails?: Record<string, number>;
     summary: {
         budgetGoal: number;
         totalSavings: number;
@@ -15,11 +17,18 @@ interface Category {
     };
 }
 
-export default function PlanningTab({ tripId, initialCategories, onUpdate }: { tripId: string, initialCategories: Category[], onUpdate: () => void }) {
+interface Person {
+    id: string;
+    name: string;
+}
+
+export default function PlanningTab({ tripId, initialCategories, persons, onUpdate }: { tripId: string, initialCategories: Category[], persons: Person[], onUpdate: () => void }) {
     const [categories, setCategories] = useState<Category[]>(initialCategories);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newCatName, setNewCatName] = useState('');
     const [newCatGoal, setNewCatGoal] = useState('');
+    const [budgetType, setBudgetType] = useState<'GLOBAL' | 'PER_PERSON'>('GLOBAL');
+    const [personGoals, setPersonGoals] = useState<Record<string, string>>({});
 
     // Saving entry modal state
     const [savingModalOpen, setSavingModalOpen] = useState(false);
@@ -33,6 +42,17 @@ export default function PlanningTab({ tripId, initialCategories, onUpdate }: { t
     const handleCreateCategory = async (e: React.FormEvent) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
+
+        let finalGoal = parseFloat(newCatGoal);
+        let finalDetails = null;
+
+        if (budgetType === 'PER_PERSON') {
+            finalDetails = Object.entries(personGoals).reduce((acc, [id, val]) => ({
+                ...acc, [id]: parseFloat(val) || 0
+            }), {});
+            finalGoal = Object.values(finalDetails).reduce((sum, val) => sum + (val as number), 0);
+        }
+
         try {
             const res = await fetch(`http://localhost:3000/api/categories`, {
                 method: 'POST',
@@ -43,14 +63,17 @@ export default function PlanningTab({ tripId, initialCategories, onUpdate }: { t
                 body: JSON.stringify({
                     tripId,
                     name: newCatName,
-                    budgetType: 'global',
-                    budgetGoal: parseFloat(newCatGoal)
+                    budgetType,
+                    budgetGoal: finalGoal,
+                    budgetDetails: finalDetails
                 })
             });
             if (res.ok) {
                 setIsModalOpen(false);
                 setNewCatName('');
                 setNewCatGoal('');
+                setBudgetType('GLOBAL');
+                setPersonGoals({});
                 onUpdate();
             } else {
                 alert('Failed to create category');
@@ -150,21 +173,60 @@ export default function PlanningTab({ tripId, initialCategories, onUpdate }: { t
             {/* New Category Modal */}
             {isModalOpen && (
                 <div className={styles.modalOverlay}>
-                    <div className={`glass ${styles.modal}`}>
+                    <div className={`glass ${styles.modal}`} style={{ maxWidth: '600px', width: '90%' }}>
                         <div className={styles.modalHeader}>
                             <h2 className={styles.modalTitle}>New Category</h2>
                             <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}>&times;</button>
                         </div>
-                        <form onSubmit={handleCreateCategory} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <form onSubmit={handleCreateCategory} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             <div>
                                 <label className="input-label">Name (e.g. Flights, Food)</label>
-                                <input type="text" className="input-base" value={newCatName} onChange={e => setNewCatName(e.target.value)} required />
+                                <input type="text" className="input-base" placeholder="Category name..." value={newCatName} onChange={e => setNewCatName(e.target.value)} required />
                             </div>
+
                             <div>
-                                <label className="input-label">Budget Goal</label>
-                                <input type="number" step="0.01" className="input-base" value={newCatGoal} onChange={e => setNewCatGoal(e.target.value)} required />
+                                <label className="input-label">Budget Type</label>
+                                <div style={{ display: 'flex', gap: '2rem', marginTop: '0.5rem' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.95rem' }}>
+                                        <input type="radio" checked={budgetType === 'GLOBAL'} onChange={() => setBudgetType('GLOBAL')} style={{ width: '18px', height: '18px' }} /> General Expense
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.95rem' }}>
+                                        <input type="radio" checked={budgetType === 'PER_PERSON'} onChange={() => setBudgetType('PER_PERSON')} style={{ width: '18px', height: '18px' }} /> Per Person
+                                    </label>
+                                </div>
                             </div>
-                            <div className={styles.formActions}>
+
+                            <div style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                                {budgetType === 'GLOBAL' ? (
+                                    <div>
+                                        <label className="input-label">Total Budget Goal</label>
+                                        <input type="number" step="0.01" className="input-base" placeholder="0.00" value={newCatGoal} onChange={e => setNewCatGoal(e.target.value)} required />
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                                        <label className="input-label" style={{ marginBottom: '0.5rem' }}>Budget per Person</label>
+                                        {persons.map(p => (
+                                            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.02)', padding: '10px 16px', borderRadius: '8px' }}>
+                                                <span style={{ flex: 1, fontWeight: 500 }}>{p.name}</span>
+                                                <div style={{ position: 'relative' }}>
+                                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '0.8rem' }}>$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        className="input-base"
+                                                        style={{ width: '130px', paddingLeft: '24px' }}
+                                                        placeholder="0.00"
+                                                        value={personGoals[p.id] || ''}
+                                                        onChange={e => setPersonGoals({ ...personGoals, [p.id]: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className={styles.formActions} style={{ marginTop: '0.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--card-border)' }}>
                                 <button type="button" className={styles.btnSecondary} onClick={() => setIsModalOpen(false)}>Cancel</button>
                                 <button type="submit" className="btn-primary">Create Category</button>
                             </div>

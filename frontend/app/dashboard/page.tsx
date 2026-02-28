@@ -35,7 +35,9 @@ export default function Dashboard() {
         endDate: string;
         currency: string;
         selectedCity: GeoNamesCity | null;
-    }>({ name: '', startDate: '', endDate: '', currency: 'USD', selectedCity: null });
+        persons: string[];
+    }>({ name: '', startDate: '', endDate: '', currency: 'USD', selectedCity: null, persons: [] });
+    const [personInput, setPersonInput] = useState('');
 
     // Autocomplete state
     const [searchQuery, setSearchQuery] = useState('');
@@ -132,6 +134,7 @@ export default function Dashboard() {
                     startDate: newTrip.startDate,
                     endDate: newTrip.endDate,
                     currency: newTrip.currency,
+                    persons: newTrip.persons
                 })
             });
 
@@ -158,14 +161,40 @@ export default function Dashboard() {
                 // Add to local state
                 setTrips([{ ...createdTrip, cities: initialCities }, ...trips]);
                 setIsModalOpen(false);
-                setNewTrip({ name: '', startDate: '', endDate: '', currency: 'USD', selectedCity: null });
+                setNewTrip({ name: '', startDate: '', endDate: '', currency: 'USD', selectedCity: null, persons: [] });
                 setSearchQuery('');
+                setPersonInput('');
             } else {
                 const err = await res.json();
                 alert(err.message || 'Error creating trip');
             }
         } catch (error) {
             console.error('Failed to create trip:', error);
+        }
+    };
+
+    const handleDeleteTrip = async (e: React.MouseEvent, tripId: string) => {
+        e.preventDefault(); // Prevent navigation to trip details
+        e.stopPropagation();
+
+        if (!confirm('Are you sure you want to delete this trip? All related data will be permanently removed.')) {
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`http://localhost:3000/api/trips/${tripId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                setTrips(trips.filter(t => t.id !== tripId));
+            } else {
+                alert('Failed to delete trip');
+            }
+        } catch (error) {
+            console.error('Error deleting trip:', error);
         }
     };
 
@@ -196,7 +225,16 @@ export default function Dashboard() {
                     {trips.length > 0 ? (
                         trips.map(trip => (
                             <Link href={`/trips/${trip.id}`} key={trip.id} className={`glass ${styles.tripCard}`}>
-                                <h3 className={styles.tripTitle}>{trip.name}</h3>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <h3 className={styles.tripTitle}>{trip.name}</h3>
+                                    <button
+                                        className={styles.deleteBtn}
+                                        onClick={(e) => handleDeleteTrip(e, trip.id)}
+                                        title="Delete Trip"
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
                                 <div className={styles.tripMeta}>
                                     <span>📍 {trip.cities?.length > 0 ? trip.cities[0].city.name : 'No cities yet'}</span>
                                     <span className={`${styles.tripStatus} ${styles[`status${trip.status.charAt(0) + trip.status.slice(1).toLowerCase()}`]}`}>
@@ -298,6 +336,50 @@ export default function Dashboard() {
                                     <option value="BRL">BRL (R$)</option>
                                     <option value="GBP">GBP (£)</option>
                                 </select>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <label className="input-label">Travelers</label>
+                                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                    <input
+                                        type="text"
+                                        className="input-base"
+                                        placeholder="Add traveler name..."
+                                        value={personInput}
+                                        onChange={e => setPersonInput(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                if (personInput.trim()) {
+                                                    setNewTrip({ ...newTrip, persons: [...newTrip.persons, personInput.trim()] });
+                                                    setPersonInput('');
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn-primary"
+                                        style={{ padding: '0 20px' }}
+                                        onClick={() => {
+                                            if (personInput.trim()) {
+                                                setNewTrip({ ...newTrip, persons: [...newTrip.persons, personInput.trim()] });
+                                                setPersonInput('');
+                                            }
+                                        }}
+                                    >Add</button>
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    {newTrip.persons.map((p, i) => (
+                                        <div key={i} style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '4px 12px', borderRadius: '16px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {p}
+                                            <span
+                                                style={{ cursor: 'pointer', fontWeight: 'bold', color: 'var(--danger)' }}
+                                                onClick={() => setNewTrip({ ...newTrip, persons: newTrip.persons.filter((_, idx) => idx !== i) })}
+                                            >×</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className={styles.formActions}>

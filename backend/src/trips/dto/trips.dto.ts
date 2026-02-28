@@ -14,6 +14,9 @@ export class CreateTripDto {
     @IsString()
     @IsNotEmpty()
     currency!: string;
+
+    @IsOptional()
+    persons?: string[];
 }
 
 export class UpdateTripDto {
@@ -36,4 +39,7 @@ export class UpdateTripDto {
     @IsEnum(['PLANNING', 'ACTIVE', 'COMPLETED'])
     @IsOptional()
     status?: 'PLANNING' | 'ACTIVE' | 'COMPLETED';
+
+    @IsOptional()
+    persons?: string[];
 }

@@ -32,6 +32,7 @@ interface TripData {
         totalAvailable: number;
         overallSavingsProgress: number;
     };
+    persons: { id: string; name: string }[];
 }
 
 interface GeoNamesCity {
@@ -53,6 +54,8 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<GeoNamesCity[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
+    const [personInput, setPersonInput] = useState('');
 
     const fetchTrip = async () => {
         const token = localStorage.getItem('token');
@@ -150,6 +153,27 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
         }
     };
 
+    const handleUpdatePersons = async () => {
+        if (!trip) return;
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`http://localhost:3000/api/trips/${tripId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ persons: trip.persons.map(p => p.name) })
+            });
+            if (res.ok) {
+                setIsPersonModalOpen(false);
+                fetchTrip();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     const handleStatusChange = async (newStatus: string) => {
         const token = localStorage.getItem('token');
         try {
@@ -195,6 +219,13 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <button
+                                className={styles.btnSecondary}
+                                style={{ padding: '6px 16px', borderRadius: '999px', fontSize: '0.875rem' }}
+                                onClick={() => setIsPersonModalOpen(true)}
+                            >
+                                👥 {trip.persons?.length || 0} Travelers
+                            </button>
                             <select
                                 className={styles.statusBadge}
                                 style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', cursor: 'pointer' }}
@@ -300,10 +331,72 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                 )}
 
                 {/* Dynamic Tab Contents */}
-                {activeTab === 'PLANNING' && <PlanningTab tripId={tripId} initialCategories={(trip as any).categories || []} onUpdate={fetchTrip} />}
+                {activeTab === 'PLANNING' && <PlanningTab tripId={tripId} initialCategories={(trip as any).categories || []} persons={trip.persons} onUpdate={fetchTrip} />}
                 {activeTab === 'ACTIVE' && <ActiveTab tripId={tripId} categories={(trip as any).categories || []} onUpdate={fetchTrip} />}
                 {activeTab === 'ADVANCED' && <AdvancedTab tripId={tripId} categories={(trip as any).categories || []} onUpdate={fetchTrip} />}
 
+                {/* Travelers Management Modal */}
+                {isPersonModalOpen && (
+                    <div className={styles.modalOverlay}>
+                        <div className={`glass ${styles.modal}`} style={{ maxWidth: '450px' }}>
+                            <div className={styles.modalHeader}>
+                                <h2 className={styles.modalTitle}>Manage Travelers</h2>
+                                <button className={styles.closeBtn} onClick={() => setIsPersonModalOpen(false)}>&times;</button>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <input
+                                        type="text"
+                                        className="input-base"
+                                        placeholder="Traveler name..."
+                                        value={personInput}
+                                        onChange={e => setPersonInput(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                if (personInput.trim()) {
+                                                    setTrip({ ...trip, persons: [...trip.persons, { id: Date.now().toString(), name: personInput.trim() }] });
+                                                    setPersonInput('');
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        className="btn-primary"
+                                        style={{ padding: '0 20px' }}
+                                        onClick={() => {
+                                            if (personInput.trim()) {
+                                                setTrip({ ...trip, persons: [...trip.persons, { id: Date.now().toString(), name: personInput.trim() }] });
+                                                setPersonInput('');
+                                            }
+                                        }}
+                                    >Add</button>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto' }}>
+                                    {trip.persons.length === 0 ? (
+                                        <p style={{ opacity: 0.5, textAlign: 'center' }}>No travelers added.</p>
+                                    ) : (
+                                        trip.persons.map((p, i) => (
+                                            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '10px 16px', borderRadius: '8px' }}>
+                                                <span>{p.name}</span>
+                                                <button
+                                                    style={{ background: 'transparent', color: 'var(--danger)', fontSize: '1.2rem' }}
+                                                    onClick={() => setTrip({ ...trip, persons: trip.persons.filter((_, idx) => idx !== i) })}
+                                                >×</button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                <div className={styles.formActions} style={{ borderTop: '1px solid var(--card-border)', paddingTop: '1.5rem' }}>
+                                    <button className={styles.btnSecondary} onClick={() => setIsPersonModalOpen(false)}>Cancel</button>
+                                    <button className="btn-primary" onClick={handleUpdatePersons}>Save Changes</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
