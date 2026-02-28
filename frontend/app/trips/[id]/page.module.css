@@ -1,0 +1,325 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--card-border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.userMenu {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.linkBtn {
+    background: transparent;
+    color: var(--foreground);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-sm);
+    transition: background var(--transition-fast);
+}
+
+.linkBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.main {
+    flex: 1;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.headerTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+    .headerTop {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    opacity: 0.7;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.statusPlanning {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--primary);
+}
+
+.statusActive {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.statusCompleted {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--secondary);
+}
+
+/* Summary Cards */
+.summaryGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.summaryCard {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.summaryTitle {
+    font-size: 0.875rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.summaryValue {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.summaryValue.success {
+    color: var(--success);
+}
+
+.summaryValue.primary {
+    color: var(--primary);
+}
+
+.summaryValue.warning {
+    color: var(--warning);
+}
+
+.summaryValue.danger {
+    color: var(--danger);
+}
+
+/* Tabs Navigation */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 1px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Edge */
+}
+
+.tab {
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: var(--foreground);
+    opacity: 0.6;
+    background: transparent;
+    border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    position: relative;
+}
+
+.tab:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab.active {
+    opacity: 1;
+    color: var(--primary);
+}
+
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary);
+}
+
+/* Route Tab Content */
+.routeLayout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 900px) {
+    .routeLayout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cityList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cityCard {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cityInfo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.cityOrder {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.cityName {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.cityCountry {
+    font-size: 0.875rem;
+    opacity: 0.7;
+}
+
+.cityActions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btnDanger {
+    background: transparent;
+    color: var(--danger);
+    padding: 8px 16px;
+    border: 1px solid var(--danger);
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+    transition: background var(--transition-fast);
+}
+
+.btnDanger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.searchSection {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    position: sticky;
+    top: 90px;
+}
+
+.searchBox {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--border-radius-sm);
+    margin-top: 4px;
+    padding: 0;
+    list-style: none;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--glass-shadow);
+}
+
+.dropdownItem {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--card-border);
+    transition: background var(--transition-fast);
+}
+
+.dropdownItem:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dropdownItem:last-child {
+    border-bottom: none;
+}
