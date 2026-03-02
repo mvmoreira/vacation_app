@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
+import { useLanguage } from '../../context/LanguageContext';
+import globalStyles from '../trips/[id]/page.module.css'; // For common styles if needed
 
 interface Trip {
     id: string;
@@ -22,6 +24,7 @@ interface GeoNamesCity {
 }
 
 export default function Dashboard() {
+    const { t, language, setLanguage } = useLanguage();
     const router = useRouter();
     const [trips, setTrips] = useState<Trip[]>([]);
     const [loading, setLoading] = useState(true);
@@ -204,20 +207,27 @@ export default function Dashboard() {
         <div className={styles.container}>
             <nav className={styles.navbar}>
                 <div className={styles.logo}>TravelBudget</div>
+                <div className={styles.navLinks}>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginRight: '1rem' }}>
+                        <button onClick={() => setLanguage('pt')} style={{ opacity: language === 'pt' ? 1 : 0.4, padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', fontWeight: 600 }}>PT</button>
+                        <button onClick={() => setLanguage('en')} style={{ opacity: language === 'en' ? 1 : 0.4, padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', fontWeight: 600 }}>EN</button>
+                        <button onClick={() => setLanguage('es')} style={{ opacity: language === 'es' ? 1 : 0.4, padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', fontWeight: 600 }}>ES</button>
+                    </div>
+                </div>
                 <div className={styles.userMenu}>
                     <Link href="/teams/settings" style={{ fontWeight: 600, opacity: 0.8, marginRight: '1rem', transition: 'opacity 0.2s' }} onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0.8'}>
                         ⚙️ Team Settings
                     </Link>
-                    <span>Hello, {user?.name.split(' ')[0]}</span>
-                    <button onClick={handleLogout} className={styles.logoutBtn}>Logout</button>
+                    <span>{t('hello') || 'Hello'}, {user?.name.split(' ')[0]}</span>
+                    <button onClick={handleLogout} className={styles.logoutBtn}>{t('logout')}</button>
                 </div>
             </nav>
 
             <main className={styles.main}>
                 <div className={styles.header}>
-                    <h1 className={styles.title}>Your Trips</h1>
+                    <h1 className={styles.title}>{t('my_trips')}</h1>
                     <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-                        + New Trip
+                        + {t('create_trip')}
                     </button>
                 </div>
 
@@ -248,8 +258,8 @@ export default function Dashboard() {
                         ))
                     ) : (
                         <div className={styles.emptyState}>
-                            <h3>No trips yet!</h3>
-                            <p style={{ opacity: 0.7, marginTop: '0.5rem' }}>Start planning your next adventure.</p>
+                            <h3>{t('no_trips_yet')}</h3>
+                            <p style={{ opacity: 0.7, marginTop: '0.5rem' }}>{t('start_planning')}</p>
                         </div>
                     )}
                 </div>
@@ -260,133 +270,136 @@ export default function Dashboard() {
                 <div className={styles.modalOverlay}>
                     <div className={`glass ${styles.modal}`}>
                         <div className={styles.modalHeader}>
-                            <h2 className={styles.modalTitle}>Plan a New Trip</h2>
+                            <h2 className={styles.modalTitle}>{t('plan_new_trip')}</h2>
                             <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}>&times;</button>
                         </div>
 
-                        <form onSubmit={handleCreateTrip} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <label className="input-label" htmlFor="name">Trip Name</label>
-                                <input
-                                    id="name" type="text" className="input-base"
-                                    placeholder="Eurotrip 2026"
-                                    value={newTrip.name}
-                                    onChange={e => setNewTrip({ ...newTrip, name: e.target.value })}
-                                    required
-                                />
-                            </div>
-
-                            {/* City Autocomplete */}
-                            <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                                <label className="input-label" htmlFor="destination">Primary Destination</label>
-                                <input
-                                    id="destination" type="text" className="input-base"
-                                    placeholder="Type city name (e.g. Orland)..."
-                                    value={searchQuery}
-                                    onChange={e => {
-                                        setSearchQuery(e.target.value);
-                                        setNewTrip({ ...newTrip, selectedCity: null });
-                                    }}
-                                    autoComplete="off"
-                                />
-                                {isSearching && <div style={{ position: 'absolute', right: '12px', top: '14px', pointerEvents: 'none', opacity: 0.6 }}>🔍</div>}
-
-                                {/* Dropdown Results */}
-                                {searchResults && searchResults.length > 0 && (
-                                    <ul style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', marginTop: '4px', padding: 0, listStyle: 'none', maxHeight: '200px', overflowY: 'auto', zIndex: 100, backdropFilter: 'blur(12px)', display: 'block', visibility: 'visible' }}>
-                                        {searchResults.map((city: GeoNamesCity) => (
-                                            <li key={`${city.geonameId}`}
-                                                onClick={() => {
-                                                    setNewTrip({ ...newTrip, selectedCity: city });
-                                                    setSearchQuery(city.name);
-                                                    setSearchResults([]);
-                                                }}
-                                                style={{ padding: '12px 16px', cursor: 'pointer', borderBottom: '1px solid var(--card-border)', transition: 'background 0.2s' }}
-                                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                            >
-                                                <div style={{ fontWeight: 600 }}>{city.name}</div>
-                                                <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{city.countryName}</div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                    <label className="input-label" htmlFor="startDate">Start Date</label>
-                                    <input id="startDate" type="date" className="input-base"
-                                        value={newTrip.startDate} onChange={e => setNewTrip({ ...newTrip, startDate: e.target.value })} required
-                                    />
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                    <label className="input-label" htmlFor="endDate">End Date</label>
-                                    <input id="endDate" type="date" className="input-base"
-                                        value={newTrip.endDate} onChange={e => setNewTrip({ ...newTrip, endDate: e.target.value })} required
-                                    />
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <label className="input-label" htmlFor="currency">Currency</label>
-                                <select id="currency" className="input-base" value={newTrip.currency} onChange={e => setNewTrip({ ...newTrip, currency: e.target.value })} required style={{ appearance: 'none' }}>
-                                    <option value="USD">USD ($)</option>
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="BRL">BRL (R$)</option>
-                                    <option value="GBP">GBP (£)</option>
-                                </select>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <label className="input-label">Travelers</label>
-                                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <div className={styles.modalContent}>
+                            <form onSubmit={handleCreateTrip} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                <div>
+                                    <label className="input-label" htmlFor="name">{t('trip_name')}</label>
                                     <input
-                                        type="text"
-                                        className="input-base"
-                                        placeholder="Add traveler name..."
-                                        value={personInput}
-                                        onChange={e => setPersonInput(e.target.value)}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
+                                        id="name" type="text" className="input-base"
+                                        placeholder="e.g. Eurotrip 2026, Summer in Japan..."
+                                        value={newTrip.name}
+                                        onChange={e => setNewTrip({ ...newTrip, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+
+                                {/* City Autocomplete */}
+                                <div style={{ position: 'relative' }}>
+                                    <label className="input-label" htmlFor="destination">{t('primary_destination')}</label>
+                                    <div className={styles.searchBox || ''}>
+                                        <input
+                                            id="destination" type="text" className="input-base"
+                                            placeholder="Where are you going? (e.g. Orland)"
+                                            value={searchQuery}
+                                            onChange={e => {
+                                                setSearchQuery(e.target.value);
+                                                setNewTrip({ ...newTrip, selectedCity: null });
+                                            }}
+                                            autoComplete="off"
+                                        />
+                                        {isSearching && <div style={{ position: 'absolute', right: '12px', top: '14px', pointerEvents: 'none', opacity: 0.6 }}>🔍</div>}
+
+                                        {/* Dropdown Results */}
+                                        {searchResults && searchResults.length > 0 && (
+                                            <ul className={styles.dropdown} style={{ display: 'block', visibility: 'visible' }}>
+                                                {searchResults.map((city: GeoNamesCity) => (
+                                                    <li key={`${city.geonameId}`}
+                                                        className={styles.dropdownItem}
+                                                        onClick={() => {
+                                                            setNewTrip({ ...newTrip, selectedCity: city });
+                                                            setSearchQuery(city.name);
+                                                            setSearchResults([]);
+                                                        }}
+                                                    >
+                                                        <div style={{ fontWeight: 600 }}>{city.name}</div>
+                                                        <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{city.countryName}</div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="input-label" htmlFor="startDate">{t('start_date')}</label>
+                                        <input id="startDate" type="date" className="input-base"
+                                            value={newTrip.startDate} onChange={e => setNewTrip({ ...newTrip, startDate: e.target.value })} required
+                                        />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="input-label" htmlFor="endDate">{t('end_date')}</label>
+                                        <input id="endDate" type="date" className="input-base"
+                                            value={newTrip.endDate} onChange={e => setNewTrip({ ...newTrip, endDate: e.target.value })} required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="input-label" htmlFor="currency">{t('currency')}</label>
+                                    <select id="currency" className="input-base" value={newTrip.currency} onChange={e => setNewTrip({ ...newTrip, currency: e.target.value })} required style={{ appearance: 'none', background: 'rgba(255,255,255,0.05)' }}>
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="BRL">BRL (R$)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="input-label">{t('travelers_count')} ({t('optional') || 'Optional'})</label>
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                        <input
+                                            type="text"
+                                            className="input-base"
+                                            placeholder={t('traveler_name')}
+                                            value={personInput}
+                                            onChange={e => setPersonInput(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    if (personInput.trim()) {
+                                                        setNewTrip({ ...newTrip, persons: [...newTrip.persons, personInput.trim()] });
+                                                        setPersonInput('');
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="btn-primary"
+                                            style={{ padding: '0 20px' }}
+                                            onClick={() => {
                                                 if (personInput.trim()) {
                                                     setNewTrip({ ...newTrip, persons: [...newTrip.persons, personInput.trim()] });
                                                     setPersonInput('');
                                                 }
-                                            }
-                                        }}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="btn-primary"
-                                        style={{ padding: '0 20px' }}
-                                        onClick={() => {
-                                            if (personInput.trim()) {
-                                                setNewTrip({ ...newTrip, persons: [...newTrip.persons, personInput.trim()] });
-                                                setPersonInput('');
-                                            }
-                                        }}
-                                    >Add</button>
+                                            }}
+                                        >+</button>
+                                    </div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                        {newTrip.persons.map((p, i) => (
+                                            <div key={i} style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '6px 14px', borderRadius: '20px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span>{p}</span>
+                                                <button
+                                                    type="button"
+                                                    style={{ cursor: 'pointer', fontWeight: 'bold', color: 'var(--danger)', background: 'transparent' }}
+                                                    onClick={() => setNewTrip({ ...newTrip, persons: newTrip.persons.filter((_, idx) => idx !== i) })}
+                                                >×</button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                    {newTrip.persons.map((p, i) => (
-                                        <div key={i} style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '4px 12px', borderRadius: '16px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            {p}
-                                            <span
-                                                style={{ cursor: 'pointer', fontWeight: 'bold', color: 'var(--danger)' }}
-                                                onClick={() => setNewTrip({ ...newTrip, persons: newTrip.persons.filter((_, idx) => idx !== i) })}
-                                            >×</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            </form>
+                        </div>
 
-                            <div className={styles.formActions}>
-                                <button type="button" className={styles.btnSecondary} onClick={() => setIsModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary">Create Trip</button>
-                            </div>
-                        </form>
+                        <div className={styles.formActions}>
+                            <button type="button" className={styles.btnSecondary} onClick={() => setIsModalOpen(false)}>{t('cancel')}</button>
+                            <button type="button" className="btn-primary" style={{ padding: '10px 32px' }} onClick={(e: any) => handleCreateTrip(e)}>{t('create_trip')}</button>
+                        </div>
                     </div>
                 </div>
             )}

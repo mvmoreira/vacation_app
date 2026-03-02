@@ -1,10 +1,7 @@
-import type { Metadata } from 'next';
-import './globals.css';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Travel Budget App',
-  description: 'Manage your trips, savings, and expenses.',
-};
+import './globals.css';
+import { LanguageProvider } from '../context/LanguageContext';
 
 export default function RootLayout({
   children,
@@ -12,9 +9,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="pt">
+      <head>
+        <title>Travel Budget App</title>
+        <meta name="description" content="Manage your trips, savings, and expenses." />
+      </head>
       <body>
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

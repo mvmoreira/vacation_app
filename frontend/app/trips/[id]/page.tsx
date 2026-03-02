@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { use } from 'react';
 import styles from './page.module.css';
+import { useLanguage } from '@/context/LanguageContext';
 
 import PlanningTab from '@/components/PlanningTab';
 import ActiveTab from '@/components/ActiveTab';
@@ -42,6 +43,7 @@ interface GeoNamesCity {
 }
 
 export default function TripDetails({ params }: { params: Promise<{ id: string }> }) {
+    const { t } = useLanguage();
     const router = useRouter();
     const resolvedParams = use(params);
     const tripId = resolvedParams.id;
@@ -203,7 +205,7 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
             <nav className={styles.navbar}>
                 <div className={styles.logo}>TravelBudget</div>
                 <div className={styles.userMenu}>
-                    <Link href="/dashboard" className={styles.linkBtn}>← Back to Dashboard</Link>
+                    <Link href="/dashboard" className={styles.linkBtn}>{t('back_to_dashboard')}</Link>
                 </div>
             </nav>
 
@@ -224,7 +226,7 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                                 style={{ padding: '6px 16px', borderRadius: '999px', fontSize: '0.875rem' }}
                                 onClick={() => setIsPersonModalOpen(true)}
                             >
-                                👥 {trip.persons?.length || 0} Travelers
+                                👥 {trip.persons?.length || 0} {t('travelers_count')}
                             </button>
                             <select
                                 className={styles.statusBadge}
@@ -232,9 +234,9 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                                 value={trip.status}
                                 onChange={(e) => handleStatusChange(e.target.value)}
                             >
-                                <option value="PLANNING">Planning Phase</option>
-                                <option value="ACTIVE">Active Trip</option>
-                                <option value="COMPLETED">Completed</option>
+                                <option value="PLANNING">{t('planning_phase')}</option>
+                                <option value="ACTIVE">{t('active_trip')}</option>
+                                <option value="COMPLETED">{t('completed')}</option>
                             </select>
                         </div>
                     </div>
@@ -242,18 +244,18 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                     {/* Financial Summary Snippets */}
                     <div className={styles.summaryGrid}>
                         <div className={`glass ${styles.summaryCard}`}>
-                            <span className={styles.summaryTitle}>Goal vs Saved</span>
+                            <span className={styles.summaryTitle}>{t('goal_vs_saved')}</span>
                             <div>
                                 <span className={`${styles.summaryValue} ${styles.primary}`}>{formatCurrency(trip.tripSummary.totalSaved)}</span>
                                 <span style={{ opacity: 0.6, fontSize: '1.2rem' }}> / {formatCurrency(trip.tripSummary.totalBudgetGoal)}</span>
                             </div>
                         </div>
                         <div className={`glass ${styles.summaryCard}`}>
-                            <span className={styles.summaryTitle}>Available Budget</span>
+                            <span className={styles.summaryTitle}>{t('available_budget')}</span>
                             <span className={`${styles.summaryValue} ${styles.success}`}>{formatCurrency(trip.tripSummary.totalAvailable)}</span>
                         </div>
                         <div className={`glass ${styles.summaryCard}`}>
-                            <span className={styles.summaryTitle}>Total Spent</span>
+                            <span className={styles.summaryTitle}>{t('total_spent')}</span>
                             <span className={`${styles.summaryValue} ${styles.danger}`}>{formatCurrency(trip.tripSummary.totalSpent)}</span>
                         </div>
                     </div>
@@ -261,10 +263,10 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
 
                 {/* Tabs System */}
                 <div className={styles.tabs}>
-                    <button className={`${styles.tab} ${activeTab === 'ROUTE' ? styles.active : ''}`} onClick={() => setActiveTab('ROUTE')}>Route & Cities</button>
-                    <button className={`${styles.tab} ${activeTab === 'PLANNING' ? styles.active : ''}`} onClick={() => setActiveTab('PLANNING')}>Planning & Savings</button>
-                    <button className={`${styles.tab} ${activeTab === 'ACTIVE' ? styles.active : ''}`} onClick={() => setActiveTab('ACTIVE')}>Expenses</button>
-                    <button className={`${styles.tab} ${activeTab === 'ADVANCED' ? styles.active : ''}`} onClick={() => setActiveTab('ADVANCED')}>Funding & Transfers</button>
+                    <button className={`${styles.tab} ${activeTab === 'ROUTE' ? styles.active : ''}`} onClick={() => setActiveTab('ROUTE')}>{t('route_cities')}</button>
+                    <button className={`${styles.tab} ${activeTab === 'PLANNING' ? styles.active : ''}`} onClick={() => setActiveTab('PLANNING')}>{t('budget_savings')}</button>
+                    <button className={`${styles.tab} ${activeTab === 'ACTIVE' ? styles.active : ''}`} onClick={() => setActiveTab('ACTIVE')}>{t('expenses')}</button>
+                    <button className={`${styles.tab} ${activeTab === 'ADVANCED' ? styles.active : ''}`} onClick={() => setActiveTab('ADVANCED')}>{t('funding_transfers')}</button>
                 </div>
 
                 {/* Tab Content: ROUTE */}
@@ -272,10 +274,10 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                     <div className={styles.routeLayout}>
                         {/* Left: City List */}
                         <div className={styles.cityList}>
-                            <h2 style={{ marginBottom: '1rem' }}>Itinerary</h2>
+                            <h2 style={{ marginBottom: '1rem' }}>{t('itinerary')}</h2>
                             {trip.cities.length === 0 ? (
                                 <div className={`glass`} style={{ padding: '2rem', textAlign: 'center', opacity: 0.7 }}>
-                                    No cities added yet. Search and add your first destination!
+                                    {t('no_cities')}
                                 </div>
                             ) : (
                                 trip.cities.map((tc, index) => (
@@ -298,12 +300,12 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                         {/* Right: Add City Search */}
                         <div className={styles.searchSection}>
                             <div className={`glass`} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <h3 style={{ fontSize: '1.25rem' }}>Add Destination</h3>
+                                <h3 style={{ fontSize: '1.25rem' }}>{t('add_destination')}</h3>
                                 <div className={styles.searchBox}>
                                     <input
                                         type="text"
                                         className="input-base"
-                                        placeholder="Type city name (e.g. Orland)..."
+                                        placeholder={t('search_city_placeholder')}
                                         value={searchQuery}
                                         onChange={e => setSearchQuery(e.target.value)}
                                         autoComplete="off"
@@ -340,7 +342,7 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                     <div className={styles.modalOverlay}>
                         <div className={`glass ${styles.modal}`} style={{ maxWidth: '450px' }}>
                             <div className={styles.modalHeader}>
-                                <h2 className={styles.modalTitle}>Manage Travelers</h2>
+                                <h2 className={styles.modalTitle}>{t('manage_travelers')}</h2>
                                 <button className={styles.closeBtn} onClick={() => setIsPersonModalOpen(false)}>&times;</button>
                             </div>
 
@@ -349,7 +351,7 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                                     <input
                                         type="text"
                                         className="input-base"
-                                        placeholder="Traveler name..."
+                                        placeholder={t('traveler_name')}
                                         value={personInput}
                                         onChange={e => setPersonInput(e.target.value)}
                                         onKeyDown={e => {
@@ -370,7 +372,7 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                                                 setPersonInput('');
                                             }
                                         }}
-                                    >Add</button>
+                                    >{t('add')}</button>
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto' }}>
@@ -390,8 +392,8 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                                 </div>
 
                                 <div className={styles.formActions} style={{ borderTop: '1px solid var(--card-border)', paddingTop: '1.5rem' }}>
-                                    <button className={styles.btnSecondary} onClick={() => setIsPersonModalOpen(false)}>Cancel</button>
-                                    <button className="btn-primary" onClick={handleUpdatePersons}>Save Changes</button>
+                                    <button className={styles.btnSecondary} onClick={() => setIsPersonModalOpen(false)}>{t('cancel')}</button>
+                                    <button className="btn-primary" onClick={handleUpdatePersons}>{t('save_changes')}</button>
                                 </div>
                             </div>
                         </div>
