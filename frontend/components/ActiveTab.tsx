@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import styles from '../app/trips/[id]/page.module.css';
 
 interface Expense {
@@ -23,6 +24,7 @@ interface Category {
 }
 
 export default function ActiveTab({ tripId, categories, onUpdate }: { tripId: string, categories: Category[], onUpdate: () => void }) {
+    const { t } = useLanguage();
     const [expenseModalOpen, setExpenseModalOpen] = useState(false);
     const [activeCategoryId, setActiveCategoryId] = useState('');
     const [expenseAmount, setExpenseAmount] = useState('');
@@ -61,14 +63,14 @@ export default function ActiveTab({ tripId, categories, onUpdate }: { tripId: st
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Active Expense Tracker</h2>
-                <p style={{ opacity: 0.7 }}>Track your daily spending against your available budget.</p>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>{t('expense_tracker_title')}</h2>
+                <p style={{ opacity: 0.7 }}>{t('expense_tracker_desc')}</p>
             </div>
 
             <div className={styles.grid} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
                 {categories.length === 0 ? (
                     <div className={`glass ${styles.emptyState}`} style={{ gridColumn: '1 / -1' }}>
-                        No categories defined yet. Go to the Planning tab to set them up.
+                        {t('active_tab_empty')}
                     </div>
                 ) : (
                     categories.map(cat => (
@@ -76,17 +78,17 @@ export default function ActiveTab({ tripId, categories, onUpdate }: { tripId: st
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{cat.name}</h3>
                                 <span className={cat.summary.available < 0 ? styles.danger : ''} style={{ fontWeight: 700, fontSize: '1.25rem' }}>
-                                    {formatCurrency(cat.summary.available)} left
+                                    {formatCurrency(cat.summary.available)} {t('left')}
                                 </span>
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <span style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase' }}>Daily Goal ({cat.summary.remainingDays} days)</span>
-                                    <span style={{ fontWeight: 600 }}>{formatCurrency(cat.summary.dailyGoal)} / day</span>
+                                    <span style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase' }}>{t('daily_goal')} ({cat.summary.remainingDays} {t('days')})</span>
+                                    <span style={{ fontWeight: 600 }}>{formatCurrency(cat.summary.dailyGoal)} / {t('day')}</span>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                    <span style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase' }}>Spent So Far</span>
+                                    <span style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase' }}>{t('spent_so_far')}</span>
                                     <span style={{ fontWeight: 600, color: 'var(--danger)' }}>{formatCurrency(cat.summary.totalExpenses)}</span>
                                 </div>
                             </div>
@@ -100,17 +102,17 @@ export default function ActiveTab({ tripId, categories, onUpdate }: { tripId: st
                                         setExpenseModalOpen(true);
                                     }}
                                 >
-                                    <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>−</span> Record Expense
+                                    <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>−</span> {t('record_expense')}
                                 </button>
                             </div>
 
                             {/* Show last 3 expenses if any */}
                             {cat.expenses && cat.expenses.length > 0 && (
                                 <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>Recent Expenses:</span>
+                                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{t('recent_expenses')}:</span>
                                     {cat.expenses.slice(0, 3).map(exp => (
                                         <div key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.25rem' }}>
-                                            <span style={{ opacity: 0.8 }}>{exp.description || 'Expense'}</span>
+                                            <span style={{ opacity: 0.8 }}>{exp.description || t('expense')}</span>
                                             <span style={{ color: 'var(--danger)', fontWeight: 500 }}>-{formatCurrency(Number(exp.amount))}</span>
                                         </div>
                                     ))}
@@ -122,30 +124,32 @@ export default function ActiveTab({ tripId, categories, onUpdate }: { tripId: st
             </div>
 
             {expenseModalOpen && (
-                <div className={styles.modalOverlay}>
-                    <div className={`glass ${styles.modal}`}>
-                        <div className={styles.modalHeader}>
-                            <h2 className={styles.modalTitle}>Record Expense</h2>
-                            <button className={styles.closeBtn} onClick={() => setExpenseModalOpen(false)}>&times;</button>
+                <div className="modal-overlay">
+                    <div className="modal-container">
+                        <div className="modal-header">
+                            <h2 className="modal-title">{t('record_expense')}</h2>
+                            <button className="modal-close" onClick={() => setExpenseModalOpen(false)}>&times;</button>
                         </div>
-                        <form onSubmit={handleAddExpense} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div>
-                                <label className="input-label">Amount Spent</label>
-                                <input type="number" step="0.01" className="input-base" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} required />
-                            </div>
-                            <div>
-                                <label className="input-label">Date</label>
-                                <input type="date" className="input-base" value={expenseDate} onChange={e => setExpenseDate(e.target.value)} required />
-                            </div>
-                            <div>
-                                <label className="input-label">Description / Place</label>
-                                <input type="text" className="input-base" placeholder="e.g. Starbucks, Uber" value={expenseDesc} onChange={e => setExpenseDesc(e.target.value)} required />
-                            </div>
-                            <div className={styles.formActions}>
-                                <button type="button" className={styles.btnSecondary} onClick={() => setExpenseModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary" style={{ background: 'var(--danger)', boxShadow: '0 4px 14px 0 rgba(239, 68, 68, 0.39)' }}>Save Expense</button>
-                            </div>
-                        </form>
+                        <div className="modal-content">
+                            <form onSubmit={handleAddExpense} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div>
+                                    <label className="input-label">{t('amount_spent')}</label>
+                                    <input type="number" step="0.01" className="input-base" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} required />
+                                </div>
+                                <div>
+                                    <label className="input-label">{t('date')}</label>
+                                    <input type="date" className="input-base" value={expenseDate} onChange={e => setExpenseDate(e.target.value)} required />
+                                </div>
+                                <div>
+                                    <label className="input-label">{t('description_place')}</label>
+                                    <input type="text" className="input-base" placeholder={t('desc_placeholder')} value={expenseDesc} onChange={e => setExpenseDesc(e.target.value)} required />
+                                </div>
+                                <div className="modal-footer" style={{ padding: '1.5rem 0 0' }}>
+                                    <button type="button" className="btn-secondary" onClick={() => setExpenseModalOpen(false)}>{t('cancel')}</button>
+                                    <button type="submit" className="btn-primary" style={{ background: 'var(--danger)', boxShadow: '0 4px 14px 0 rgba(239, 68, 68, 0.39)' }}>{t('save_expense')}</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             )}

@@ -197,7 +197,7 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: trip?.currency || 'USD' }).format(amount);
     };
 
-    if (loading || !trip) return <div className={styles.container} style={{ alignItems: 'center', justifyContent: 'center' }}>Loading trip details...</div>;
+    if (loading || !trip) return <div className={styles.container} style={{ alignItems: 'center', justifyContent: 'center' }}>{t('loading_trip_details') || 'Loading trip details...'}</div>;
 
     return (
         <div className={styles.container}>
@@ -290,7 +290,7 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
                                             </div>
                                         </div>
                                         <div className={styles.cityActions}>
-                                            <button className={styles.btnDanger} onClick={() => handleRemoveCity(tc.id)}>Romove</button>
+                                            <button className={styles.btnDanger} onClick={() => handleRemoveCity(tc.id)}>{t('remove')}</button>
                                         </div>
                                     </div>
                                 ))
@@ -339,62 +339,63 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
 
                 {/* Travelers Management Modal */}
                 {isPersonModalOpen && (
-                    <div className={styles.modalOverlay} onClick={() => setIsPersonModalOpen(false)}>
-                        <div className={`glass ${styles.modal}`} style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
-                            <div className={styles.modalHeader}>
-                                <h2 className={styles.modalTitle}>{t('manage_travelers')}</h2>
-                                <button className={styles.closeBtn} onClick={() => setIsPersonModalOpen(false)}>&times;</button>
+                    <div className="modal-overlay" onClick={() => setIsPersonModalOpen(false)}>
+                        <div className="modal-container" style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2 className="modal-title">{t('manage_travelers')}</h2>
+                                <button className="modal-close" onClick={() => setIsPersonModalOpen(false)}>&times;</button>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <input
-                                        type="text"
-                                        className="input-base"
-                                        placeholder={t('traveler_name')}
-                                        value={personInput}
-                                        onChange={e => setPersonInput(e.target.value)}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter') {
+                            <div className="modal-content">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <input
+                                            type="text"
+                                            className="input-base"
+                                            placeholder={t('traveler_name')}
+                                            value={personInput}
+                                            onChange={e => setPersonInput(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    if (personInput.trim()) {
+                                                        setTrip({ ...trip, persons: [...trip.persons, { id: Date.now().toString(), name: personInput.trim() }] });
+                                                        setPersonInput('');
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <button
+                                            className="btn-primary"
+                                            style={{ padding: '0 20px' }}
+                                            onClick={() => {
                                                 if (personInput.trim()) {
                                                     setTrip({ ...trip, persons: [...trip.persons, { id: Date.now().toString(), name: personInput.trim() }] });
                                                     setPersonInput('');
                                                 }
-                                            }
-                                        }}
-                                    />
-                                    <button
-                                        className="btn-primary"
-                                        style={{ padding: '0 20px' }}
-                                        onClick={() => {
-                                            if (personInput.trim()) {
-                                                setTrip({ ...trip, persons: [...trip.persons, { id: Date.now().toString(), name: personInput.trim() }] });
-                                                setPersonInput('');
-                                            }
-                                        }}
-                                    >{t('add')}</button>
-                                </div>
+                                            }}
+                                        >{t('add')}</button>
+                                    </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto' }}>
-                                    {trip.persons.length === 0 ? (
-                                        <p style={{ opacity: 0.5, textAlign: 'center' }}>No travelers added.</p>
-                                    ) : (
-                                        trip.persons.map((p, i) => (
-                                            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '10px 16px', borderRadius: '8px' }}>
-                                                <span>{p.name}</span>
-                                                <button
-                                                    style={{ background: 'transparent', color: 'var(--danger)', fontSize: '1.2rem' }}
-                                                    onClick={() => setTrip({ ...trip, persons: trip.persons.filter((_, idx) => idx !== i) })}
-                                                >×</button>
-                                            </div>
-                                        ))
-                                    )}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto' }}>
+                                        {trip.persons.length === 0 ? (
+                                            <p style={{ opacity: 0.5, textAlign: 'center' }}>{t('no_travelers')}</p>
+                                        ) : (
+                                            trip.persons.map((p, i) => (
+                                                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0, 0, 0, 0.03)', padding: '10px 16px', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                                                    <span style={{ fontWeight: 500 }}>{p.name}</span>
+                                                    <button
+                                                        style={{ background: 'transparent', color: 'var(--danger)', fontSize: '1.2rem', cursor: 'pointer' }}
+                                                        onClick={() => setTrip({ ...trip, persons: trip.persons.filter((_, idx) => idx !== i) })}
+                                                    >×</button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
-
-                                <div className={styles.formActions} style={{ borderTop: '1px solid var(--card-border)', paddingTop: '1.5rem' }}>
-                                    <button className={styles.btnSecondary} onClick={() => setIsPersonModalOpen(false)}>{t('cancel')}</button>
-                                    <button className="btn-primary" onClick={handleUpdatePersons}>{t('save_changes')}</button>
-                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn-secondary" onClick={() => setIsPersonModalOpen(false)}>{t('cancel')}</button>
+                                <button className="btn-primary" onClick={handleUpdatePersons}>{t('save_changes')}</button>
                             </div>
                         </div>
                     </div>

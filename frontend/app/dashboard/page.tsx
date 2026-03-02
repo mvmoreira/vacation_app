@@ -180,7 +180,7 @@ export default function Dashboard() {
         e.preventDefault(); // Prevent navigation to trip details
         e.stopPropagation();
 
-        if (!confirm('Are you sure you want to delete this trip? All related data will be permanently removed.')) {
+        if (!confirm(t('delete_confirm_msg') || 'Are you sure you want to delete this trip? All related data will be permanently removed.')) {
             return;
         }
 
@@ -201,7 +201,7 @@ export default function Dashboard() {
         }
     };
 
-    if (loading) return <div className={styles.container} style={{ alignItems: 'center' }}>Loading...</div>;
+    if (loading) return <div className={styles.container} style={{ alignItems: 'center' }}>{t('loading') || 'Loading...'}</div>;
 
     return (
         <div className={styles.container}>
@@ -216,7 +216,7 @@ export default function Dashboard() {
                 </div>
                 <div className={styles.userMenu}>
                     <Link href="/teams/settings" style={{ fontWeight: 600, opacity: 0.8, marginRight: '1rem', transition: 'opacity 0.2s' }} onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0.8'}>
-                        ⚙️ Team Settings
+                        ⚙️ {t('team_settings')}
                     </Link>
                     <span>{t('hello') || 'Hello'}, {user?.name.split(' ')[0]}</span>
                     <button onClick={handleLogout} className={styles.logoutBtn}>{t('logout')}</button>
@@ -226,8 +226,8 @@ export default function Dashboard() {
             <main className={styles.main}>
                 <div className={styles.header}>
                     <h1 className={styles.title}>{t('my_trips')}</h1>
-                    <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-                        + {t('create_trip')}
+                    <button className="btn-action btn-pulse" onClick={() => setIsModalOpen(true)}>
+                        <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>+</span> {t('create_trip')}
                     </button>
                 </div>
 
@@ -240,15 +240,15 @@ export default function Dashboard() {
                                     <button
                                         className={styles.deleteBtn}
                                         onClick={(e) => handleDeleteTrip(e, trip.id)}
-                                        title="Delete Trip"
+                                        title={t('delete_trip')}
                                     >
                                         🗑️
                                     </button>
                                 </div>
                                 <div className={styles.tripMeta}>
-                                    <span>📍 {trip.cities?.length > 0 ? trip.cities[0].city.name : 'No cities yet'}</span>
+                                    <span>📍 {trip.cities?.length > 0 ? trip.cities[0].city.name : t('no_cities_yet')}</span>
                                     <span className={`${styles.tripStatus} ${styles[`status${trip.status.charAt(0) + trip.status.slice(1).toLowerCase()}`]}`}>
-                                        {trip.status}
+                                        {t(trip.status.toLowerCase()) || trip.status}
                                     </span>
                                 </div>
                                 <div className={styles.tripMeta}>
@@ -267,20 +267,20 @@ export default function Dashboard() {
 
             {/* Create Trip Modal */}
             {isModalOpen && (
-                <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
-                    <div className={`glass ${styles.modal}`} onClick={e => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <h2 className={styles.modalTitle}>{t('plan_new_trip')}</h2>
-                            <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}>&times;</button>
+                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+                    <div className="modal-container" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">{t('plan_new_trip')}</h2>
+                            <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
                         </div>
 
-                        <div className={styles.modalContent}>
+                        <div className="modal-content">
                             <form onSubmit={handleCreateTrip} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                                 <div>
                                     <label className="input-label" htmlFor="name">{t('trip_name')}</label>
                                     <input
                                         id="name" type="text" className="input-base"
-                                        placeholder="e.g. Eurotrip 2026, Summer in Japan..."
+                                        placeholder={t('trip_name_placeholder')}
                                         value={newTrip.name}
                                         onChange={e => setNewTrip({ ...newTrip, name: e.target.value })}
                                         required
@@ -293,7 +293,7 @@ export default function Dashboard() {
                                     <div className={styles.searchBox || ''}>
                                         <input
                                             id="destination" type="text" className="input-base"
-                                            placeholder="Where are you going? (e.g. Orland)"
+                                            placeholder={t('primary_dest_placeholder')}
                                             value={searchQuery}
                                             onChange={e => {
                                                 setSearchQuery(e.target.value);
@@ -380,9 +380,9 @@ export default function Dashboard() {
                                             }}
                                         >+</button>
                                     </div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
                                         {newTrip.persons.map((p, i) => (
-                                            <div key={i} style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '6px 14px', borderRadius: '20px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div key={i} style={{ background: 'rgba(37, 99, 235, 0.1)', border: '1px solid rgba(37, 99, 235, 0.2)', padding: '6px 14px', borderRadius: '20px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#000000' }}>
                                                 <span>{p}</span>
                                                 <button
                                                     type="button"
@@ -393,16 +393,15 @@ export default function Dashboard() {
                                         ))}
                                     </div>
                                 </div>
+                                <div className="modal-footer" style={{ padding: '1.5rem 0 0' }}>
+                                    <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>{t('cancel')}</button>
+                                    <button type="submit" className="btn-primary">{t('create_trip')}</button>
+                                </div>
                             </form>
-                        </div>
-
-                        <div className={styles.formActions}>
-                            <button type="button" className={styles.btnSecondary} onClick={() => setIsModalOpen(false)}>{t('cancel')}</button>
-                            <button type="button" className="btn-primary" style={{ padding: '10px 32px' }} onClick={(e: any) => handleCreateTrip(e)}>{t('create_trip')}</button>
                         </div>
                     </div>
                 </div>
             )}
-        </div>
+        </div >
     );
 }

@@ -135,7 +135,7 @@ export default function PlanningTab({ tripId, initialCategories, persons, onUpda
 
             <div className={PageStyles.summaryGrid} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
                 {categories.length === 0 ? (
-                    <div className={`glass ${PageStyles.emptyState}`} style={{ gridColumn: '1 / -1', padding: '4rem', opacity: 0.8 }}>
+                    <div className={`glass ${PageStyles.emptyState}`} style={{ gridColumn: '1 / -1', padding: '4rem', opacity: 0.8, background: 'rgba(0, 0, 0, 0.02)', color: '#000000' }}>
                         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📈</div>
                         <h3>{t('no_categories_yet') || 'No budget categories yet'}</h3>
                         <p>{t('no_categories')}</p>
@@ -147,7 +147,7 @@ export default function PlanningTab({ tripId, initialCategories, persons, onUpda
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '1.25rem',
-                            background: 'rgba(30, 41, 59, 0.4)',
+                            background: 'rgba(0, 0, 0, 0.05)',
                             transition: 'transform 0.3s ease, border-color 0.3s ease'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -165,7 +165,7 @@ export default function PlanningTab({ tripId, initialCategories, persons, onUpda
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: 500 }}>
-                                    <span style={{ opacity: 0.7 }}>Pre-trip Saved</span>
+                                    <span style={{ opacity: 0.7 }}>{t('saved')}</span>
                                     <span style={{ color: cat.summary.savingsProgress >= 100 ? 'var(--success)' : 'inherit' }}>
                                         {formatCurrency(cat.summary.totalSavings)} ({cat.summary.savingsProgress.toFixed(0)}%)
                                     </span>
@@ -187,13 +187,13 @@ export default function PlanningTab({ tripId, initialCategories, persons, onUpda
                                 <button
                                     style={{
                                         flex: 1,
-                                        background: 'rgba(59, 130, 246, 0.1)',
-                                        color: 'var(--primary)',
+                                        background: 'rgba(37, 99, 235, 0.1)',
+                                        color: '#000000',
                                         padding: '0.75rem',
                                         borderRadius: '12px',
                                         fontWeight: 600,
                                         transition: 'all 0.2s ease',
-                                        border: '1px solid rgba(59, 130, 246, 0.2)'
+                                        border: '1px solid rgba(37, 99, 235, 0.2)'
                                     }}
                                     onMouseEnter={e => {
                                         e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
@@ -219,21 +219,21 @@ export default function PlanningTab({ tripId, initialCategories, persons, onUpda
 
             {/* NEW MODERN MODAL: Create Category */}
             {isModalOpen && (
-                <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
-                    <div className={styles.modal} onClick={e => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <h2 className={styles.modalTitle}>New Category</h2>
-                            <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}>&times;</button>
+                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+                    <div className="modal-container" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">{t('new_category')}</h2>
+                            <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
                         </div>
 
-                        <div className={styles.modalContent}>
+                        <div className="modal-content">
                             <form onSubmit={handleCreateCategory}>
                                 <div className={styles.formGroup}>
                                     <label className="input-label">{t('category_name')}</label>
                                     <input
                                         type="text"
                                         className="input-base"
-                                        placeholder="e.g. Flight Tickets, Luxury Hotel..."
+                                        placeholder={t('category_name_placeholder') || 'e.g. Flight Tickets, Luxury Hotel...'}
                                         value={newCatName}
                                         onChange={e => setNewCatName(e.target.value)}
                                         required
@@ -316,8 +316,8 @@ export default function PlanningTab({ tripId, initialCategories, persons, onUpda
                                     </div>
                                 )}
 
-                                <div className={styles.modalFooter}>
-                                    <button type="button" className="btn-secondary" style={{ background: 'transparent', color: '#fff', opacity: 0.6 }} onClick={() => setIsModalOpen(false)}>{t('cancel')}</button>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>{t('cancel')}</button>
                                     <button type="submit" className="btn-primary" style={{ padding: '12px 40px' }}>{t('create_category')}</button>
                                 </div>
                             </form>
@@ -328,13 +328,13 @@ export default function PlanningTab({ tripId, initialCategories, persons, onUpda
 
             {/* Deposit Modal (Also updated slightly) */}
             {savingModalOpen && (
-                <div className={styles.modalOverlay} onClick={() => setSavingModalOpen(false)}>
-                    <div className={styles.modal} style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <h2 className={styles.modalTitle} style={{ fontSize: '1.5rem' }}>{t('deposit_savings')}</h2>
-                            <button className={styles.closeBtn} onClick={() => setSavingModalOpen(false)}>&times;</button>
+                <div className="modal-overlay" onClick={() => setSavingModalOpen(false)}>
+                    <div className="modal-container" style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title" style={{ fontSize: '1.5rem' }}>{t('deposit_savings')}</h2>
+                            <button className="modal-close" onClick={() => setSavingModalOpen(false)}>&times;</button>
                         </div>
-                        <div className={styles.modalContent}>
+                        <div className="modal-content">
                             <form onSubmit={handleAddSaving} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                                 <div>
                                     <label className="input-label">{t('amount_to_save')}</label>
@@ -356,11 +356,11 @@ export default function PlanningTab({ tripId, initialCategories, persons, onUpda
                                     <input type="date" className="input-base" value={savingDate} onChange={e => setSavingDate(e.target.value)} required />
                                 </div>
                                 <div>
-                                    <label className="input-label">{t('note')} ({t('optional') || 'Optional'})</label>
-                                    <input type="text" className="input-base" placeholder="Where did this money come from?" value={savingDesc} onChange={e => setSavingDesc(e.target.value)} />
+                                    <label className="input-label">{t('note')} ({t('optional')})</label>
+                                    <input type="text" className="input-base" placeholder={t('note_placeholder') || 'Where did this money come from?'} value={savingDesc} onChange={e => setSavingDesc(e.target.value)} />
                                 </div>
-                                <div className={styles.modalFooter} style={{ padding: '1rem 0 0' }}>
-                                    <button type="button" onClick={() => setSavingModalOpen(false)} style={{ background: 'transparent', color: '#fff', opacity: 0.6 }}>{t('cancel')}</button>
+                                <div className="modal-footer" style={{ padding: '1.5rem 0 0' }}>
+                                    <button type="button" className="btn-secondary" onClick={() => setSavingModalOpen(false)}>{t('cancel')}</button>
                                     <button type="submit" className="btn-primary">{t('confirm_deposit')}</button>
                                 </div>
                             </form>
