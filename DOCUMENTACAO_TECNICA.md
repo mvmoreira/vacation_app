@@ -1,89 +1,85 @@
 # Documentação Técnica: App de Orçamento de Viagem (Travel Budget)
 
-Este documento descreve a arquitetura, lógica de negócios e estrutura de dados desenvolvida para o projeto. Ele serve como base para a migração para qualquer outra linguagem ou framework.
+Este documento descreve a arquitetura, lógica de negócios e estrutura de dados atualizada para o projeto. Ele serve como base para entendimento do sistema e futuras expansões.
 
 ## 1. Estrutura do Banco de Dados (Entidades e Relações)
 
-A arquitetura foi desenhada para suportar **Multi-Tenancy** (múltiplas famílias/grupos isolados).
+A arquitetura utiliza o framework NestJS com Prisma ORM, suportando isolamento de dados por usuário e viagens.
 
 ### Entidades Principais:
 
-*   **Tenant (Família/Grupo):**
-    *   `id` (PK)
-    *   `name` (String): Nome do grupo ou família.
+*   **User (Usuário):**
+    *   `id` (PK), `email`, `password`, `name`.
 *   **Trip (Viagem):**
     *   `id` (PK)
-    *   `tenant_id` (FK -> Tenant)
-    *   `trip_name` (String): Ex: "Férias na Europa".
-    *   `start_date` (Date): Data de início.
-    *   `end_date` (Date): Data de fim (calculada como `start_date` + `total_days`).
-    *   `total_days` (Integer): Duração em dias.
-    *   `currency` (String): Sigla da moeda (BRL, USD, EUR, GBP).
+    *   `userId` (FK -> User)
+    *   `name` (String): Ex: "Eurotrip 2026".
+    *   `startDate` (Date) / `endDate` (Date).
+    *   `currency` (String): Moeda base (USD, BRL, EUR, GBP).
+    *   `status` (Enum): 'PLANNING', 'ACTIVE', 'COMPLETED'.
 *   **Person (Viajante):**
     *   `id` (PK)
-    *   `tenant_id` (FK -> Tenant)
-    *   `trip_id` (FK -> Trip)
-    *   `name` (String): Nome do viajante.
-*   **Category (Categoria de Gasto):**
+    *   `tripId` (FK -> Trip)
+    *   `name` (String): Nome do participante.
+*   **Category (Categoria de Orçamento):**
     *   `id` (PK)
-    *   `tenant_id` (FK -> Tenant)
-    *   `trip_id` (FK -> Trip)
-    *   `name` (String): Ex: "Alimentação".
-    *   `budget_amount` (Numeric): Valor total destinado à categoria.
-    *   `budget_type` (Enum): 'global' ou 'per_person'.
-    *   `budget_details` (JSON): Mapeamento de `{ "NomeViajante": Valor }` para orçamentos individuais.
-*   **Expense (Gasto Individual):**
+    *   `tripId` (FK -> Trip)
+    *   `name` (String): Ex: "Hospedagem".
+    *   `budgetType` (Enum): 'GLOBAL' ou 'PER_PERSON'.
+    *   `budgetGoal` (Numeric): Valor total da categoria.
+    *   `budgetDetails` (JSON): Mapeamento de `{ "id_viajante": valor }` para metas individuais.
+*   **City (Destino):**
     *   `id` (PK)
-    *   `tenant_id` (FK -> Tenant)
-    *   `category_id` (FK -> Category)
-    *   `person_id` (FK -> Person, opcional): Quem realizou o gasto.
-    *   `amount` (Numeric): Valor gasto.
-    *   `date` (Date): Data do gasto.
-    *   `description` (String): Descrição curta.
+    *   `geonameId` (Integer): ID externo da API GeoNames.
+    *   `name` (String), `countryName` (String).
+*   **Saving (Reserva/Depósito):**
+    *   Registro de dinheiro guardado antes da viagem para cada categoria.
+*   **Expense (Gasto):**
+    *   Gastos reais realizados durante a viagem.
 
 ---
 
-## 2. Lógica de Negócios e Cálculos
+## 2. Tecnologias e Frontend
 
-### Cálculo de Dias Restantes:
-Essencial para o rateio do orçamento e metas diárias.
-```python
-hoje = data_atual()
-# Se a viagem ainda não começou, usamos o período total
-# Se já começou, usamos a diferença entre o fim e hoje
-dias_restantes = (viagem.end_date - max(hoje, viagem.start_date)).days
-dias_restantes = max(0, dias_restantes)
-```
+### Core Stack:
+*   **Backend:** NestJS (Node.js) + Prisma + PostgreSQL.
+*   **Frontend:** Next.js (App Router) + TypeScript.
+*   **Estilização:** CSS Modules com variáveis nativas (Vanilla CSS).
 
-### Meta Diária por Categoria:
-Informa quanto pode ser gasto por dia para não estourar o orçamento.
-```python
-meta_diaria = (categoria.budget_amount - categoria.total_gasto) / dias_restantes
-```
+### Sistema de Internacionalização (i18n):
+Implementado via `LanguageContext` no React, permitindo troca dinâmica entre:
+*   **Português (PT)**
+*   **Inglês (EN)**
+*   **Espanhol (ES)**
+As traduções são persistidas no `localStorage` do usuário.
 
-### Orçamento "Por Pessoa":
-Ao definir uma categoria como `per_person`, o sistema soma os budgets individuais definidos no `budget_details`. Os gastos vinculados a um `person_id` são subtraídos do saldo dessa categoria.
+### UI/UX Design:
+*   **Glassmorphism:** Uso intensivo de transparências (`glass` class), `backdrop-filter` e bordas semitransparentes.
+*   **Dark Theme:** Toda a interface utiliza variáveis de CSS (`--background`, `--card-bg`) para um tema escuro consistente.
+*   **Tipografia Dinâmica:** Títulos com gradientes `linear-gradient` e sombras de texto (`text-shadow`) para máxima legibilidade sobre fundos complexos.
 
 ---
 
-## 3. Fluxos de UX e Usabilidade
+## 3. Lógica de Negócios e Orçamentos
 
-1.  **Dashboard de Viagem:** Visão geral com saldo total restante e "Saldo Diário Ideal" da viagem inteira.
-2.  **Cards de Categoria:** Cada card exibe:
-    *   Barra de progresso (Gasto vs. Orçamento).
-    *   Meta diária atualizada em tempo real.
-    *   Lista colapsável dos últimos gastos (com opção de editar/excluir).
-3.  **Sincronização de Moeda:** Toda a interface deve formatar os valores dinamicamente com base no campo `currency` da viagem.
-4.  **Edição de Viajantes:** Trocar o nome de uma pessoa deve disparar uma atualização no objeto JSON `budget_details` de todas as categorias para manter a integridade do rateio.
+### Autocomplete de Cidades:
+Integração com a API **GeoNames** para busca de cidades e países em tempo real, permitindo adicionar destinos específicos ao roteiro da viagem.
 
----
+### Orçamento Híbrido:
+1.  **Global:** Uma meta única para a categoria (ex: "Aluguel de Carro").
+2.  **Por Pessoa:** Metas individuais que somam o total da categoria. Isso permite controlar quanto cada viajante deve contribuir ou gastar (ex: "Passagens Aéreas").
 
-## 4. Recomendações de Segurança para a Nova Versão
-
-*   **Autenticação Robusta:** Implementar login (o projeto atual usa um Tenant "mockado").
-*   **JWT ou Sessão Segura:** Para garantir que um Tenant nunca acesse o `trip_id` de outro.
-*   **Camada de Serviço (Service Layer):** Separar a lógica de cálculo (dias, metas) das rotas da API para facilitar testes unitários.
-*   **Validação de Input:** Garantir que `amount` nunca seja negativo e que `start_date` seja válido.
+### Rastreamento Financeiro (Finances):
+*   **Goal vs Saved:** Comparação entre a meta estabelecida e o que já foi guardado (Savings) na fase de planejamento.
+*   **Available vs Spent:** Durante a viagem (Active), o sistema calcula o saldo real disponível subtraindo os gastos das reservas.
 
 ---
-**Status do Projeto Original:** Funcional com Python/Flask e Postgres (Neon.tech).
+
+## 4. Segurança e Integridade
+
+*   **Autenticação:** JWT (JSON Web Tokens) para todas as rotas protegidas.
+*   **Isolamento:** Cada consulta garante que o `userId` do token pertença à viagem ou categoria acessada.
+*   **Tratamento de Longos Textos:** Nomes de participantes e cidades utilizam `text-overflow: ellipsis` para manter a integridade do layout em telas menores.
+
+---
+**Última Atualização:** Março de 2026.

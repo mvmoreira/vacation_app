@@ -339,8 +339,8 @@ export default function TripDetails({ params }: { params: Promise<{ id: string }
 
                 {/* Travelers Management Modal */}
                 {isPersonModalOpen && (
-                    <div className={styles.modalOverlay}>
-                        <div className={`glass ${styles.modal}`} style={{ maxWidth: '450px' }}>
+                    <div className={styles.modalOverlay} onClick={() => setIsPersonModalOpen(false)}>
+                        <div className={`glass ${styles.modal}`} style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
                             <div className={styles.modalHeader}>
                                 <h2 className={styles.modalTitle}>{t('manage_travelers')}</h2>
                                 <button className={styles.closeBtn} onClick={() => setIsPersonModalOpen(false)}>&times;</button>

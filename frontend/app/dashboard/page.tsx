@@ -267,8 +267,8 @@ export default function Dashboard() {
 
             {/* Create Trip Modal */}
             {isModalOpen && (
-                <div className={styles.modalOverlay}>
-                    <div className={`glass ${styles.modal}`}>
+                <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
+                    <div className={`glass ${styles.modal}`} onClick={e => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
                             <h2 className={styles.modalTitle}>{t('plan_new_trip')}</h2>
                             <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}>&times;</button>

@@ -219,8 +219,8 @@ export default function PlanningTab({ tripId, initialCategories, persons, onUpda
 
             {/* NEW MODERN MODAL: Create Category */}
             {isModalOpen && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modal}>
+                <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
+                    <div className={styles.modal} onClick={e => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
                             <h2 className={styles.modalTitle}>New Category</h2>
                             <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}>&times;</button>
@@ -328,8 +328,8 @@ export default function PlanningTab({ tripId, initialCategories, persons, onUpda
 
             {/* Deposit Modal (Also updated slightly) */}
             {savingModalOpen && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modal} style={{ maxWidth: '450px' }}>
+                <div className={styles.modalOverlay} onClick={() => setSavingModalOpen(false)}>
+                    <div className={styles.modal} style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
                             <h2 className={styles.modalTitle} style={{ fontSize: '1.5rem' }}>{t('deposit_savings')}</h2>
                             <button className={styles.closeBtn} onClick={() => setSavingModalOpen(false)}>&times;</button>
